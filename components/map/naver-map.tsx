@@ -5,6 +5,9 @@
  * @description Naver Maps wrapper component
  *
  * Wraps Naver Maps Web API and provides map initialization and controls.
+ *
+ * @important Naver Maps API has been upgraded - use `ncpKeyId` parameter (not `ncpClientId`)
+ * @see https://navermaps.github.io/maps.js.ncp/docs/tutorial-2-Getting-Started.html
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +41,7 @@ declare global {
         };
       };
     };
+    navermap_authFailure?: () => void;
   }
 }
 
@@ -65,6 +69,7 @@ interface NaverMapProps {
   onMarkerClick?: (restaurant: Restaurant) => void;
   center?: { lat: number; lng: number };
   zoom?: number;
+  highlightColor?: string;
 }
 
 export default function NaverMap({
@@ -72,6 +77,7 @@ export default function NaverMap({
   onMarkerClick,
   center = DEFAULT_MAP_CENTER,
   zoom = DEFAULT_MAP_ZOOM,
+  highlightColor,
 }: NaverMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
@@ -84,6 +90,15 @@ export default function NaverMap({
     if (!clientId) {
       console.error("❌ Naver Maps Client ID is not configured");
       return;
+    }
+
+    // Add authentication failure handler
+    if (typeof window !== "undefined" && !window.navermap_authFailure) {
+      window.navermap_authFailure = function () {
+        console.error(
+          "❌ Naver Maps authentication failed! Please check your ncpKeyId.",
+        );
+      };
     }
 
     console.log("🗺️ Checking Naver Maps script...");
@@ -118,7 +133,7 @@ export default function NaverMap({
 
     console.log("📥 Loading Naver Maps script...");
     const script = document.createElement("script");
-    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}`;
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}`;
     script.async = true;
     script.onload = () => {
       console.log("✅ Naver Maps script loaded successfully");
@@ -217,7 +232,7 @@ export default function NaverMap({
         ),
         map,
         title: restaurant.name_en,
-        icon: getMarkerIcon(restaurant.category),
+        icon: getMarkerIcon(restaurant.category, highlightColor),
       });
 
       // Add click event
@@ -245,7 +260,7 @@ export default function NaverMap({
       map.fitBounds(bounds);
       console.log("✅ Map bounds adjusted to show all markers");
     }
-  }, [map, restaurants, onMarkerClick]);
+  }, [map, restaurants, onMarkerClick, highlightColor]);
 
   return (
     <div className="relative w-full h-full min-h-[300px] md:min-h-[400px]">
@@ -262,10 +277,13 @@ export default function NaverMap({
 /**
  * Get marker icon based on restaurant category
  */
-function getMarkerIcon(category: Restaurant["category"]): any {
+function getMarkerIcon(
+  category: Restaurant["category"],
+  highlightColor?: string,
+): any {
   // Default icons - can be replaced with custom images
   const iconOptions = {
-    content: getMarkerContent(category),
+    content: getMarkerContent(category, highlightColor),
     anchor: new window.naver.maps.Point(12, 12),
   };
 
@@ -275,14 +293,19 @@ function getMarkerIcon(category: Restaurant["category"]): any {
 /**
  * Get marker content (SVG or HTML)
  */
-function getMarkerContent(category: Restaurant["category"]): string {
-  const colors = {
-    vegetarian: "#22c55e",
-    vegan: "#16a34a",
-    "vegetarian-friendly": "#84cc16",
-  };
+function getMarkerContent(
+  category: Restaurant["category"],
+  highlightColor?: string,
+): string {
+  // If highlightColor is provided, use it. Otherwise use category-based colors
+  const color =
+    highlightColor ||
+    (category === "vegan"
+      ? "#16a34a" // green
+      : category === "vegetarian"
+      ? "#22c55e" // lighter green
+      : "#84cc16"); // lightest green (vegetarian-friendly)
 
-  const color = colors[category] || "#22c55e";
   const icon =
     category === "vegan"
       ? "🌿🌿"

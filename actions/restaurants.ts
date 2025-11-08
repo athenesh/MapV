@@ -41,7 +41,7 @@ export async function getRestaurants(
     if (filters?.search) {
       const searchTerm = filters.search.toLowerCase();
       query = query.or(
-        `name_en.ilike.%${searchTerm}%,name_ko.ilike.%${searchTerm}%,address_en.ilike.%${searchTerm}%,address_ko.ilike.%${searchTerm}%`,
+        `name_en.ilike.%${searchTerm}%,name_ko.ilike.%${searchTerm}%,address_en.ilike.%${searchTerm}%,address_ko.ilike.%${searchTerm}%,description_en.ilike.%${searchTerm}%,description_ko.ilike.%${searchTerm}%,menu_items::text.ilike.%${searchTerm}%`,
       );
     }
 

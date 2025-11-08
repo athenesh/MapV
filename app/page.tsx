@@ -27,6 +27,7 @@ import { RestaurantList } from "@/components/restaurants/restaurant-list";
 import { SplitView } from "@/components/restaurants/split-view";
 import NaverMap from "@/components/map/naver-map";
 import { RestaurantInfoCard } from "@/components/map/restaurant-info-card";
+import { SlideUpPanel } from "@/components/map/slide-up-panel";
 import { getRestaurants, getRestaurantById } from "@/actions/restaurants";
 import type {
   Restaurant,
@@ -62,6 +63,9 @@ export default function HomePage() {
     },
     sortBy: "name",
   });
+  const [searchMode, setSearchMode] = useState<'normal' | 'quick-search'>('normal');
+  const [quickSearchResults, setQuickSearchResults] = useState<Restaurant[]>([]);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const router = useRouter();
 
   // Track visits and page views
@@ -218,6 +222,10 @@ export default function HomePage() {
       },
       sortBy: "name",
     });
+    // Reset quick search mode
+    setSearchMode('normal');
+    setQuickSearchResults([]);
+    setIsPanelOpen(false);
   };
 
   // Handle individual filter removals
@@ -248,10 +256,24 @@ export default function HomePage() {
   };
 
   // Handle quick search actions
-  const handleQuickSearch = (query: string) => {
+  const handleQuickSearch = async (query: string) => {
     console.log("⚡ Quick search:", query);
     setSearchQuery(query);
-    handleSearch(query);
+    trackSearch(query, undefined, undefined, 'quick_search');
+    
+    // Perform search
+    const results = await getRestaurants({ search: query });
+    console.log(`🔍 Found ${results.length} restaurants for "${query}"`);
+    
+    setQuickSearchResults(results);
+    setSearchMode('quick-search');
+    
+    // Switch to map view
+    setViewMode('map');
+    
+    // Open panel
+    setIsPanelOpen(true);
+    
     // Don't set active button here - let the component handle it
   };
 
@@ -410,19 +432,33 @@ export default function HomePage() {
                 </p>
               </div>
             ) : (
-              <NaverMap
-                restaurants={filteredRestaurants}
-                onMarkerClick={handleMarkerClick}
-              />
-            )}
+              <>
+                <NaverMap
+                  restaurants={searchMode === 'quick-search' ? quickSearchResults : filteredRestaurants}
+                  onMarkerClick={handleMarkerClick}
+                  highlightColor={searchMode === 'quick-search' ? '#ef4444' : undefined}
+                />
 
-            {/* Restaurant Info Card Overlay */}
-            {selectedRestaurant && (
-              <RestaurantInfoCard
-                restaurant={selectedRestaurant}
-                language={language}
-                onClose={() => setSelectedRestaurant(null)}
-              />
+                {/* Restaurant Info Card Overlay - marker click */}
+                {selectedRestaurant && (
+                  <RestaurantInfoCard
+                    restaurant={selectedRestaurant}
+                    language={language}
+                    onClose={() => setSelectedRestaurant(null)}
+                  />
+                )}
+
+                {/* Slide Up Panel - quick search results */}
+                {searchMode === 'quick-search' && (
+                  <SlideUpPanel
+                    restaurants={quickSearchResults}
+                    language={language}
+                    isOpen={isPanelOpen}
+                    onToggle={() => setIsPanelOpen(!isPanelOpen)}
+                    searchTerm={searchQuery}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
