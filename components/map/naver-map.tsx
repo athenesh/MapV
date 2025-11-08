@@ -24,20 +24,20 @@ declare global {
         Event: {
           addListener: (target: any, event: string, handler: () => void) => void;
         };
-        MapOptions: any;
+        MapOptions: {
+          center: any;
+          zoom: number;
+        };
       };
     };
   }
-  
-  namespace naver {
-    namespace maps {
-      interface MapOptions {
-        center: any;
-        zoom: number;
-      }
-    }
-  }
 }
+
+// Type declaration for naver.maps.MapOptions
+type NaverMapOptions = {
+  center: any;
+  zoom: number;
+};
 
 interface NaverMapProps {
   restaurants: Restaurant[];
@@ -92,7 +92,7 @@ export default function NaverMap({
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !window.naver?.maps) return;
 
-    const mapOptions: naver.maps.MapOptions = {
+    const mapOptions: NaverMapOptions = {
       center: new window.naver.maps.LatLng(center.lat, center.lng),
       zoom,
     };
