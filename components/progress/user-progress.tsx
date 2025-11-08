@@ -10,7 +10,13 @@
 import { useEffect, useState } from "react";
 import { getUserProgress } from "@/actions/progress";
 import type { UserProgress } from "@/types/progress";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { Language } from "@/lib/i18n";
 
 interface UserProgressProps {
@@ -40,10 +46,14 @@ export function UserProgress({ language }: UserProgressProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{language === "ko" ? "진행 상황" : "Your Progress"}</CardTitle>
+          <CardTitle>
+            {language === "ko" ? "진행 상황" : "Your Progress"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600">{language === "ko" ? "로딩 중..." : "Loading..."}</p>
+          <p className="text-gray-600">
+            {language === "ko" ? "로딩 중..." : "Loading..."}
+          </p>
         </CardContent>
       </Card>
     );
@@ -53,7 +63,9 @@ export function UserProgress({ language }: UserProgressProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{language === "ko" ? "진행 상황" : "Your Progress"}</CardTitle>
+          <CardTitle>
+            {language === "ko" ? "진행 상황" : "Your Progress"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">
@@ -69,7 +81,9 @@ export function UserProgress({ language }: UserProgressProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{language === "ko" ? "진행 상황" : "Your Progress"}</CardTitle>
+        <CardTitle>
+          {language === "ko" ? "진행 상황" : "Your Progress"}
+        </CardTitle>
         <CardDescription>
           {language === "ko"
             ? "당신의 채식 식당 탐험 활동"
@@ -80,7 +94,9 @@ export function UserProgress({ language }: UserProgressProps) {
         {/* Statistics Grid */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <div className="text-2xl font-bold text-green-600">{progress.total_visits}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {progress.total_visits}
+            </div>
             <div className="text-sm text-gray-600">
               {language === "ko" ? "방문" : "Visits"}
             </div>
@@ -94,7 +110,9 @@ export function UserProgress({ language }: UserProgressProps) {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-green-600">{progress.total_searches}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {progress.total_searches}
+            </div>
             <div className="text-sm text-gray-600">
               {language === "ko" ? "검색" : "Searches"}
             </div>
@@ -105,7 +123,9 @@ export function UserProgress({ language }: UserProgressProps) {
         {progress.average_session_duration > 0 && (
           <div>
             <div className="text-sm text-gray-600 mb-1">
-              {language === "ko" ? "평균 세션 시간" : "Average Session Duration"}
+              {language === "ko"
+                ? "평균 세션 시간"
+                : "Average Session Duration"}
             </div>
             <div className="text-lg font-semibold">
               {Math.round(progress.average_session_duration / 60)}{" "}
@@ -130,13 +150,13 @@ export function UserProgress({ language }: UserProgressProps) {
                     ? cat.category === "vegetarian"
                       ? "채식"
                       : cat.category === "vegan"
-                        ? "비건"
-                        : "채식 친화적"
+                      ? "비건"
+                      : "채식 친화적"
                     : cat.category === "vegetarian"
-                      ? "Vegetarian"
-                      : cat.category === "vegan"
-                        ? "Vegan"
-                        : "Vegetarian-Friendly"}{" "}
+                    ? "Vegetarian"
+                    : cat.category === "vegan"
+                    ? "Vegan"
+                    : "Vegetarian-Friendly"}{" "}
                   ({cat.count})
                 </span>
               ))}
@@ -167,11 +187,13 @@ export function UserProgress({ language }: UserProgressProps) {
               {language === "ko" ? "최근 조회한 식당" : "Recently Viewed"}
             </div>
             <div className="space-y-1">
-              {progress.recent_restaurant_views.slice(0, 5).map((view, index) => (
-                <div key={index} className="text-sm text-gray-600">
-                  {view.restaurant_name}
-                </div>
-              ))}
+              {progress.recent_restaurant_views
+                .slice(0, 5)
+                .map((view, index) => (
+                  <div key={index} className="text-sm text-gray-600">
+                    {view.restaurant_name}
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -179,4 +201,3 @@ export function UserProgress({ language }: UserProgressProps) {
     </Card>
   );
 }
-

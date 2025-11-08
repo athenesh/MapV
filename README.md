@@ -32,6 +32,7 @@
 Next.js 15, Clerk, Supabase를 활용한 모던 SaaS 애플리케이션 템플릿입니다.
 
 **핵심 특징:**
+
 - ✨ Next.js 15 + React 19 최신 기능 활용
 - 🔐 Clerk와 Supabase 네이티브 통합 (2025년 권장 방식)
 - 🎨 Tailwind CSS v4 + shadcn/ui
@@ -72,12 +73,14 @@ Next.js 15, Clerk, Supabase를 활용한 모던 SaaS 애플리케이션 템플�
 ## 주요 기능
 
 ### 🔐 인증 시스템
+
 - Clerk를 통한 안전한 사용자 인증
 - 소셜 로그인 지원 (Google 등)
 - Clerk 사용자 자동으로 Supabase DB에 동기화
 - 한국어 UI 지원
 
 ### 🗄️ 데이터베이스 통합
+
 - Clerk 토큰 기반 Supabase 인증 (JWT 템플릿 불필요)
 - 환경별 Supabase 클라이언트 분리:
   - Client Component용 (`useClerkSupabaseClient`)
@@ -86,12 +89,14 @@ Next.js 15, Clerk, Supabase를 활용한 모던 SaaS 애플리케이션 템플�
 - SQL 마이그레이션 시스템
 
 ### 🎨 UI/UX
+
 - shadcn/ui 기반 모던 컴포넌트
 - 완전한 반응형 디자인
 - 다크/라이트 모드 지원 가능
 - 접근성 준수 (WCAG)
 
 ### 🏗️ 아키텍처
+
 - Server Actions 우선 사용
 - 타입 안전성 보장
 - 모듈화된 코드 구조
@@ -158,9 +163,11 @@ npm install -g pnpm
 
    - **Provider Name**: `Clerk` (또는 원하는 이름)
    - **JWT Issuer (Issuer URL)**:
+
      ```
      https://your-app-12.clerk.accounts.dev
      ```
+
      (`your-app-12` 부분을 실제 Clerk Frontend API URL로 교체)
 
    - **JWKS Endpoint (JWKS URI)**:
@@ -195,6 +202,7 @@ npm install -g pnpm
 5. 성공 메시지 확인 (`Success. No rows returned`)
 
 **생성되는 테이블:**
+
 - `users`: Clerk 사용자와 동기화되는 사용자 정보 테이블
 
 #### 6. 환경 변수 설정
@@ -283,6 +291,7 @@ pnpm dev
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인합니다.
 
 **테스트 페이지:**
+
 - `/auth-test`: Clerk + Supabase 인증 통합 테스트
 - `/storage-test`: Supabase Storage 업로드 테스트
 
@@ -401,6 +410,61 @@ saas-template/
 - **`components/providers/sync-user-provider.tsx`**: 앱 전역에서 사용자 동기화 실행
 - **`CLAUDE.md`**: Claude Code를 위한 프로젝트 가이드
 
+## 배포 (Deployment)
+
+### Vercel 배포
+
+이 프로젝트는 Vercel에 배포하도록 설정되어 있습니다.
+
+#### 필수 환경 변수 설정
+
+Vercel 대시보드에서 다음 환경 변수를 설정해야 합니다:
+
+1. **Vercel 프로젝트 페이지** → **Settings** → **Environment Variables**
+2. 다음 변수들을 추가 (로컬 `.env` 파일의 값들을 복사):
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`
+   - `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/`
+   - `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NEXT_PUBLIC_STORAGE_BUCKET=uploads`
+   - `NEXT_PUBLIC_NAVER_MAP_CLIENT_ID` (선택사항)
+   - `NEXT_PUBLIC_TOUR_API_KEY` (선택사항)
+
+**중요**: Production, Preview, Development 환경 모두에 설정해야 합니다.
+
+#### 배포 트러블슈팅
+
+##### "Invalid request: should NOT have additional property `rootDirectory`" 오류
+
+이 오류는 Vercel 프로젝트 설정에서 `rootDirectory`가 설정되어 있을 때 발생합니다.
+
+**해결 방법:**
+
+1. Vercel 대시보드 접속
+2. 프로젝트 선택
+3. **Settings** 탭 클릭
+4. **General** 섹션으로 스크롤
+5. **Root Directory** 설정 확인
+6. **Root Directory** 필드가 비어있지 않다면:
+   - 필드를 비우거나
+   - 설정을 삭제
+7. 변경사항 저장 후 다시 배포
+
+**참고**: 이 프로젝트는 루트 디렉토리에 Next.js 앱이 있으므로 `rootDirectory` 설정이 필요 없습니다. `rootDirectory`는 모노레포에서 특정 하위 디렉토리를 배포할 때만 사용합니다.
+
+##### "Missing publishableKey" 오류
+
+빌드 중 Clerk 관련 오류가 발생하면:
+
+1. Vercel 환경 변수에 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`가 설정되어 있는지 확인
+2. 환경 변수 이름이 정확한지 확인 (대소문자 구분)
+3. Production, Preview, Development 환경 모두에 설정되어 있는지 확인
+4. 변경사항 저장 후 다시 배포
+
 ## 추가 리소스
 
 - [Next.js 15 문서](https://nextjs.org/docs)
@@ -408,7 +472,10 @@ saas-template/
 - [Supabase 문서](https://supabase.com/docs)
 - [shadcn/ui 문서](https://ui.shadcn.com/)
 - [Tailwind CSS v4 문서](https://tailwindcss.com/docs)
-#   M a p V  
- #   M a p V  
- #   M a p V  
- 
+  #   M a p V 
+   
+   #   M a p V 
+   
+   #   M a p V 
+   
+   

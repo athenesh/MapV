@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * @file naver-map.tsx
@@ -7,9 +7,13 @@
  * Wraps Naver Maps Web API and provides map initialization and controls.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getNaverMapsClientId } from '@/lib/naver-maps';
-import type { Restaurant } from '@/types/restaurant';
+import { useEffect, useRef, useState } from "react";
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  getNaverMapsClientId,
+} from "@/lib/naver-maps";
+import type { Restaurant } from "@/types/restaurant";
 
 declare global {
   interface Window {
@@ -22,7 +26,11 @@ declare global {
         Point: new (x: number, y: number) => any;
         SymbolStyle: any;
         Event: {
-          addListener: (target: any, event: string, handler: () => void) => void;
+          addListener: (
+            target: any,
+            event: string,
+            handler: () => void,
+          ) => void;
         };
         MapOptions: {
           center: any;
@@ -30,6 +38,19 @@ declare global {
         };
       };
     };
+  }
+}
+
+// Declare naver namespace for direct type usage
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace naver {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace maps {
+    class Marker {
+      constructor(options: any);
+      setMap(map: any): void;
+      getPosition(): any;
+    }
   }
 }
 
@@ -61,36 +82,72 @@ export default function NaverMap({
   useEffect(() => {
     const clientId = getNaverMapsClientId();
     if (!clientId) {
-      console.error('Naver Maps Client ID is not configured');
+      console.error("❌ Naver Maps Client ID is not configured");
       return;
     }
 
-    // Check if script is already loaded
-    if (window.naver && window.naver.maps) {
+    console.log("🗺️ Checking Naver Maps script...");
+
+    // Check if script is already loaded AND working
+    if (window.naver?.maps?.Map) {
+      console.log("✅ Naver Maps already loaded");
       setIsLoaded(true);
       return;
     }
 
-    const script = document.createElement('script');
+    // Check if script tag already exists
+    const existingScript = document.querySelector(
+      `script[src*="map.naver.com"]`,
+    );
+
+    if (existingScript) {
+      console.log("⏳ Naver Maps script exists, waiting for load...");
+      // Script exists but might not be loaded yet
+      const checkLoaded = setInterval(() => {
+        if (window.naver?.maps?.Map) {
+          console.log("✅ Naver Maps loaded from existing script");
+          setIsLoaded(true);
+          clearInterval(checkLoaded);
+        }
+      }, 100);
+
+      // Clear interval after 10 seconds to prevent memory leak
+      setTimeout(() => clearInterval(checkLoaded), 10000);
+      return;
+    }
+
+    console.log("📥 Loading Naver Maps script...");
+    const script = document.createElement("script");
     script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}`;
     script.async = true;
     script.onload = () => {
+      console.log("✅ Naver Maps script loaded successfully");
       setIsLoaded(true);
+    };
+    script.onerror = (error) => {
+      console.error("❌ Failed to load Naver Maps script:", error);
     };
     document.head.appendChild(script);
 
+    // DON'T remove the script on cleanup - let it persist
+    // This prevents issues with React Strict Mode remounting
     return () => {
-      // Cleanup script if component unmounts
-      const existingScript = document.querySelector(`script[src*="map.naver.com"]`);
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
+      console.log("🧹 NaverMap component unmounting (script kept for reuse)");
     };
   }, []);
 
   // Initialize map
   useEffect(() => {
-    if (!isLoaded || !mapRef.current || !window.naver?.maps) return;
+    if (!isLoaded || !mapRef.current || !window.naver?.maps) {
+      console.log("⏸️ Map initialization waiting:", {
+        isLoaded,
+        hasMapRef: !!mapRef.current,
+        hasNaverMaps: !!window.naver?.maps,
+      });
+      return;
+    }
+
+    console.log("🗺️ Initializing map...");
 
     const mapOptions: NaverMapOptions = {
       center: new window.naver.maps.LatLng(center.lat, center.lng),
@@ -98,12 +155,13 @@ export default function NaverMap({
     };
 
     const mapInstance = new window.naver.maps.Map(mapRef.current, mapOptions);
+    console.log("✅ Map instance created successfully");
     setMap(mapInstance);
 
     // Add current location button
     if (navigator.geolocation) {
-      const locationBtn = document.createElement('button');
-      locationBtn.innerHTML = '📍';
+      const locationBtn = document.createElement("button");
+      locationBtn.innerHTML = "📍";
       locationBtn.style.cssText = `
         position: absolute;
         top: 10px;
@@ -120,12 +178,14 @@ export default function NaverMap({
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            mapInstance.setCenter(new window.naver.maps.LatLng(latitude, longitude));
+            mapInstance.setCenter(
+              new window.naver.maps.LatLng(latitude, longitude),
+            );
             mapInstance.setZoom(15);
           },
           (error) => {
-            console.error('Error getting location:', error);
-          }
+            console.error("Error getting location:", error);
+          },
         );
       };
       mapRef.current.appendChild(locationBtn);
@@ -134,7 +194,16 @@ export default function NaverMap({
 
   // Add markers
   useEffect(() => {
-    if (!map || !window.naver?.maps || restaurants.length === 0) return;
+    if (!map || !window.naver?.maps || restaurants.length === 0) {
+      console.log("⏸️ Marker addition waiting:", {
+        hasMap: !!map,
+        hasNaverMaps: !!window.naver?.maps,
+        restaurantCount: restaurants.length,
+      });
+      return;
+    }
+
+    console.log(`📍 Adding ${restaurants.length} markers to map...`);
 
     // Clear existing markers
     markers.forEach((marker) => marker.setMap(null));
@@ -142,14 +211,17 @@ export default function NaverMap({
 
     restaurants.forEach((restaurant) => {
       const marker = new window.naver.maps.Marker({
-        position: new window.naver.maps.LatLng(restaurant.latitude, restaurant.longitude),
+        position: new window.naver.maps.LatLng(
+          restaurant.latitude,
+          restaurant.longitude,
+        ),
         map,
         title: restaurant.name_en,
         icon: getMarkerIcon(restaurant.category),
       });
 
       // Add click event
-      window.naver.maps.Event.addListener(marker, 'click', () => {
+      window.naver.maps.Event.addListener(marker, "click", () => {
         if (onMarkerClick) {
           onMarkerClick(restaurant);
         }
@@ -159,6 +231,7 @@ export default function NaverMap({
     });
 
     setMarkers(newMarkers);
+    console.log(`✅ ${newMarkers.length} markers added successfully`);
 
     // Fit map bounds to show all markers
     if (newMarkers.length > 0) {
@@ -170,6 +243,7 @@ export default function NaverMap({
         }
       });
       map.fitBounds(bounds);
+      console.log("✅ Map bounds adjusted to show all markers");
     }
   }, [map, restaurants, onMarkerClick]);
 
@@ -188,7 +262,7 @@ export default function NaverMap({
 /**
  * Get marker icon based on restaurant category
  */
-function getMarkerIcon(category: Restaurant['category']): any {
+function getMarkerIcon(category: Restaurant["category"]): any {
   // Default icons - can be replaced with custom images
   const iconOptions = {
     content: getMarkerContent(category),
@@ -201,15 +275,20 @@ function getMarkerIcon(category: Restaurant['category']): any {
 /**
  * Get marker content (SVG or HTML)
  */
-function getMarkerContent(category: Restaurant['category']): string {
+function getMarkerContent(category: Restaurant["category"]): string {
   const colors = {
-    vegetarian: '#22c55e',
-    vegan: '#16a34a',
-    'vegetarian-friendly': '#84cc16',
+    vegetarian: "#22c55e",
+    vegan: "#16a34a",
+    "vegetarian-friendly": "#84cc16",
   };
 
-  const color = colors[category] || '#22c55e';
-  const icon = category === 'vegan' ? '🌿🌿' : category === 'vegetarian-friendly' ? '🥗' : '🌿';
+  const color = colors[category] || "#22c55e";
+  const icon =
+    category === "vegan"
+      ? "🌿🌿"
+      : category === "vegetarian-friendly"
+      ? "🥗"
+      : "🌿";
 
   return `
     <div style="
@@ -228,4 +307,3 @@ function getMarkerContent(category: Restaurant['category']): string {
     </div>
   `;
 }
-

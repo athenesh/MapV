@@ -1,0 +1,92 @@
+graph TB
+    Start([User Visits Homepage]) --> MapLoad[Map View Loads<br/>Seoul Center]
+    
+    MapLoad --> UserAction{User Action}
+    
+    %% Browse Flow
+    UserAction -->|Browse Map| Explore[Zoom/Pan Map]
+    Explore --> SeeMarkers[See Restaurant Markers<br/>🌿 Vegetarian<br/>🌱 Vegan<br/>🍽️ Veg-Friendly]
+    SeeMarkers --> ClickMarker{Click Marker?}
+    ClickMarker -->|Yes| ShowInfo[Show Info Card]
+    ClickMarker -->|No| Explore
+    
+    %% Filter Flow
+    UserAction -->|Use Filters| FilterUI[Select Category Filter]
+    FilterUI --> FilterOptions{Filter Type}
+    FilterOptions -->|All| ShowAll[Show All Restaurants]
+    FilterOptions -->|Vegetarian| ShowVeg[Show Vegetarian Only]
+    FilterOptions -->|Vegan| ShowVegan[Show Vegan Only]
+    FilterOptions -->|Veg-Friendly| ShowFriendly[Show Veg-Friendly Only]
+    ShowAll --> UpdateMarkers[Update Map Markers]
+    ShowVeg --> UpdateMarkers
+    ShowVegan --> UpdateMarkers
+    ShowFriendly --> UpdateMarkers
+    UpdateMarkers --> SeeMarkers
+    
+    %% Search Flow
+    UserAction -->|Search| SearchInput[Enter Search Query<br/>Name or Location]
+    SearchInput --> SearchResults[Display Results]
+    SearchResults --> SearchAction{Action}
+    SearchAction -->|Select Result| ShowInfo
+    SearchAction -->|Clear Search| MapLoad
+    
+    %% Info Card Flow
+    ShowInfo --> CheckCategory{Restaurant<br/>Category}
+    
+    %% Standard Restaurant
+    CheckCategory -->|Vegetarian/Vegan| StandardInfo[Show Standard Info<br/>- Name<br/>- Address<br/>- Menu<br/>- Hours<br/>- Photos<br/>- Price Range]
+    StandardInfo --> UserInfoAction{User Action}
+    
+    %% Vegetarian-Friendly Restaurant
+    CheckCategory -->|Veg-Friendly| FriendlyInfo[Show Enhanced Info<br/>- Standard Info<br/>- Side Dish Badge<br/>- Service Indicator]
+    FriendlyInfo --> ShowReviews[Display Naver Reviews<br/>Filtered for Side Dishes]
+    ShowReviews --> ShowNotes[Show Side Dish Notes<br/>User Contributions]
+    ShowNotes --> ShowGuide[Display Ordering Guide<br/>Korean Phrases]
+    ShowGuide --> UserInfoAction
+    
+    %% User Actions from Info Card
+    UserInfoAction -->|View Photos| PhotoGallery[Photo Gallery]
+    UserInfoAction -->|Copy Phrase| CopyPhrase[Copy Korean Phrase<br/>to Clipboard]
+    UserInfoAction -->|Get Directions| Directions[Open Naver Maps<br/>Directions]
+    UserInfoAction -->|Add Note| CheckAuth{Authenticated?}
+    UserInfoAction -->|Close| MapLoad
+    
+    PhotoGallery --> UserInfoAction
+    CopyPhrase --> ShowToast[Show Success Toast<br/>✓ Copied!]
+    ShowToast --> UserInfoAction
+    Directions --> ExternalApp[Open External App]
+    
+    %% Authentication Flow
+    CheckAuth -->|No| SignIn[Redirect to Sign In<br/>Clerk Auth]
+    CheckAuth -->|Yes| NoteForm[Add Side Dish Note Form]
+    SignIn --> SignInAction{Sign In Success?}
+    SignInAction -->|Yes| NoteForm
+    SignInAction -->|No| MapLoad
+    
+    %% Note Submission Flow
+    NoteForm --> FillForm[Fill Form<br/>- Dish Name<br/>- Vegetarian?<br/>- Vegan?<br/>- Notes<br/>- Ordering Phrase<br/>- Photo]
+    FillForm --> SubmitNote[Submit Note]
+    SubmitNote --> Pending[Pending Admin Review]
+    Pending --> AdminReview{Admin Review}
+    AdminReview -->|Approved| NoteLive[Note Appears on<br/>Restaurant Page]
+    AdminReview -->|Rejected| NotifyUser[User Notified]
+    
+    %% Language Toggle Flow
+    UserAction -->|Toggle Language| LangSwitch{Current Language}
+    LangSwitch -->|English| SwitchKO[Switch to Korean]
+    LangSwitch -->|Korean| SwitchEN[Switch to English]
+    SwitchKO --> UpdateUI[Update All Text<br/>Save Preference]
+    SwitchEN --> UpdateUI
+    UpdateUI --> MapLoad
+    
+    %% Mobile vs Desktop
+    MapLoad -.->|Mobile| MobileView[Slide-up Info Card<br/>Bottom Sheet]
+    MapLoad -.->|Desktop| DesktopView[Popup Info Card<br/>Modal]
+    
+    style Start fill:#e1f5e1
+    style ShowInfo fill:#fff4e6
+    style FriendlyInfo fill:#ffe6f0
+    style ShowGuide fill:#e6f3ff
+    style CopyPhrase fill:#f0e6ff
+    style NoteForm fill:#ffe6e6
+    style NoteLive fill:#e6ffe6
